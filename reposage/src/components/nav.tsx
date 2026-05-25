@@ -1,5 +1,6 @@
 "use client";
 
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 import { GitBranch } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,6 +43,29 @@ export function Nav() {
           <GitBranch size={12} />
           Github
         </a>
+        <Show when="signed-out">
+          <SignInButton mode="redirect">
+            <button className="nav-link">Sign in</button>
+          </SignInButton>
+        </Show>
+        <Show when="signed-in">
+          <Link
+            href="/app"
+            className={`nav-link ${pathname === "/app" ? "active" : ""}`}
+          >
+            Open app
+          </Link>
+          <UserButton
+            appearance={{
+              elements: {
+                userButtonAvatarBox: {
+                  height: "24px",
+                  width: "24px",
+                },
+              },
+            }}
+          />
+        </Show>
       </div>
     </nav>
   );
