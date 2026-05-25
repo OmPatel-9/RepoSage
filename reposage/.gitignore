@@ -29,12 +29,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-package-lock.json
-dev-server.log
-dev-server.err
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local service data
+.data/
 
 # vercel
 .vercel
