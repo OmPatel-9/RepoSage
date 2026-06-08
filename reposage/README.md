@@ -1,38 +1,57 @@
-# RepoSage
+# RepoSage App
 
-RepoSage is an AI codebase reader that will index a repository, retrieve the most relevant source chunks, and answer developer questions with file citations.
+This is the Next.js application for RepoSage.
 
-## Tech Stack
+## Stack
 
-- Next.js 15 with the App Router
-- TypeScript
+- Next.js 15 App Router
+- React 19
+- TypeScript strict mode
 - Tailwind CSS v4
-- Postgres 16 with pgvector
-- Redis
-- pnpm
+- shadcn/ui components
+- `@t3-oss/env-nextjs` + Zod env validation
+- Postgres with pgvector and Redis via Docker Compose
 
-## Run Locally
-
-Install dependencies:
+## Setup
 
 ```bash
-pnpm install
+corepack pnpm install
+cp .env.example .env.local
+docker compose up -d
+corepack pnpm dev
 ```
 
-Start local infrastructure:
+Open http://localhost:3000.
+
+## Commands
+
+```bash
+# development
+corepack pnpm dev
+
+# format
+corepack pnpm format
+corepack pnpm format:check
+
+# lint and type-check
+corepack pnpm lint
+corepack pnpm exec tsc --noEmit
+
+# production build
+corepack pnpm build
+```
+
+## Local Services
 
 ```bash
 docker compose up -d
+docker compose down
 ```
 
-Start the Next.js dev server:
-
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
+Postgres runs on `localhost:5432` with database/user/password `reposage`.
+Redis runs on `localhost:6379`.
 
 ## Environment
 
-Copy `.env.example` to `.env.local` and fill in the API keys when you are ready to connect LLM and auth providers. The local database and Redis URLs are already pointed at the services in `docker-compose.yml`.
+Use `.env.example` as the template for `.env.local`. The `.env.local` file is
+ignored by Git.

@@ -1,0 +1,2 @@
+cd reposage
+corepack pnpm exec lint-staged
