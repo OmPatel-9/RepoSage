@@ -1,192 +1,128 @@
-import {
-  ArrowRight,
-  Braces,
-  Database,
-  GitBranch,
-  Search,
-  ShieldCheck,
-  TerminalSquare,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
-interface PipelineStep {
-  label: string
-  value: string
-  icon: LucideIcon
+interface Chapter {
+  number: string
+  title: string
+  body: string
 }
 
-const pipeline: PipelineStep[] = [
+const chapters: Chapter[] = [
   {
-    label: 'Clone',
-    value: 'queued',
-    icon: GitBranch,
+    number: '01',
+    title: 'Clone',
+    body: 'Point RepoSage at a public or connected private repository.',
   },
   {
-    label: 'Map',
-    value: 'AST graph',
-    icon: Braces,
+    number: '02',
+    title: 'Map',
+    body: 'Every file is parsed into an AST-aware symbol and dependency graph.',
   },
   {
-    label: 'Index',
-    value: 'vector store',
-    icon: Database,
+    number: '03',
+    title: 'Index',
+    body: 'Code chunks are embedded into pgvector behind an HNSW index.',
   },
   {
-    label: 'Review',
-    value: 'policy pass',
-    icon: ShieldCheck,
+    number: '04',
+    title: 'Review',
+    body: 'Policy passes flag security, maintainability, and onboarding gaps.',
   },
 ]
 
-const observations: string[] = [
-  'Auth boundary spans middleware, webhook sync, and app shell.',
-  'Database access should stay behind server actions or route handlers.',
-  'README references deployment before local service bootstrapping.',
+interface Desk {
+  title: string
+  body: string
+}
+
+const desks: Desk[] = [
+  {
+    title: 'Map',
+    body: 'A dependency map you can actually read, organized by architecture instead of directory depth.',
+  },
+  {
+    title: 'Review',
+    body: 'Security, maintainability, and onboarding checks that share one source graph.',
+  },
+  {
+    title: 'Ask',
+    body: 'Architecture questions answered with citations to files, commits, and symbols. Evidence over theater.',
+  },
 ]
 
 export function HomePage() {
   return (
-    <section className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="space-y-6">
-        <div className="border-b pb-8">
-          <Badge className="bg-accent text-accent-foreground hover:bg-accent mb-5">
-            editorial technical system
-          </Badge>
-          <h1 className="max-w-3xl text-4xl leading-tight font-semibold text-balance sm:text-5xl">
-            Read a repository like a field guide,
-            <span className="font-serif font-normal italic">
-              {' '}
-              not a file tree.
-            </span>
-          </h1>
-          <p className="text-muted-foreground mt-4 max-w-2xl text-base leading-7">
-            Paste a repo URL, build the dependency map, and turn architecture
-            questions into traceable answers.
-          </p>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <section className="border-b py-20 sm:py-28">
+        <p className="text-muted-foreground mb-5 font-mono text-xs tracking-[0.18em] uppercase">
+          Repository intelligence
+        </p>
+        <h1 className="max-w-3xl text-5xl leading-tight font-semibold text-balance sm:text-6xl">
+          Read a repository like a field guide,
+          <span className="font-serif font-normal italic">
+            {' '}
+            not a file tree.
+          </span>
+        </h1>
+        <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-8">
+          Paste a repo URL, build the dependency map, and turn architecture
+          questions into traceable answers.
+        </p>
+        <div className="mt-10 flex flex-wrap items-center gap-6">
+          <Link
+            href="/sign-up"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-5 py-3 font-mono text-xs tracking-[0.12em] uppercase"
+          >
+            Start reading
+            <ArrowRight className="size-4" />
+          </Link>
+          <Link
+            href="/sign-in"
+            className="text-foreground hover:text-muted-foreground font-mono text-xs tracking-[0.12em] uppercase underline underline-offset-4"
+          >
+            Sign in
+          </Link>
         </div>
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Repository intake</CardTitle>
-            <CardDescription>
-              Start with a public or connected private repository.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                <Input
-                  className="pl-9"
-                  placeholder="https://github.com/acme/core"
-                />
-              </div>
-              <Button size="lg">
-                Analyze
-                <ArrowRight className="size-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <section className="grid border-b sm:grid-cols-3">
+        {desks.map((desk) => (
+          <div
+            key={desk.title}
+            className="border-b py-10 last:border-b-0 sm:border-r sm:border-b-0 sm:px-8 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0"
+          >
+            <h2 className="mb-3 text-2xl font-semibold">
+              <span className="font-serif font-normal italic">
+                {desk.title}
+              </span>
+            </h2>
+            <p className="text-muted-foreground text-sm leading-6">
+              {desk.body}
+            </p>
+          </div>
+        ))}
+      </section>
 
-        <Tabs defaultValue="map">
-          <TabsList>
-            <TabsTrigger value="map">Map</TabsTrigger>
-            <TabsTrigger value="review">Review</TabsTrigger>
-            <TabsTrigger value="ask">Ask</TabsTrigger>
-          </TabsList>
-          <TabsContent value="map">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {pipeline.map((item) => (
-                <Card key={item.label} size="sm">
-                  <CardHeader>
-                    <item.icon className="text-primary size-4" />
-                    <CardTitle>{item.label}</CardTitle>
-                    <CardDescription>{item.value}</CardDescription>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="review">
-            <Card>
-              <CardHeader>
-                <CardTitle>Review lanes</CardTitle>
-                <CardDescription>
-                  Security, maintainability, and onboarding checks share the
-                  same source graph.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </TabsContent>
-          <TabsContent value="ask">
-            <Card>
-              <CardHeader>
-                <CardTitle>Traceable answers</CardTitle>
-                <CardDescription>
-                  Every answer should point back to files, commits, and symbols.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <aside className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Run ledger</CardTitle>
-            <CardDescription>
-              Local services are ready for Postgres + Redis.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between border-b pb-3 font-mono text-xs">
-              <span className="text-muted-foreground">postgres</span>
-              <span>pgvector:pg16</span>
-            </div>
-            <div className="flex items-center justify-between border-b pb-3 font-mono text-xs">
-              <span className="text-muted-foreground">redis</span>
-              <span>7-alpine</span>
-            </div>
-            <div className="flex items-center justify-between font-mono text-xs">
-              <span className="text-muted-foreground">env</span>
-              <span>typed by zod</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Early observations</CardTitle>
-            <CardDescription>
-              The interface favors evidence over theater.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {observations.map((item) => (
-                <li key={item} className="flex gap-3 text-sm leading-6">
-                  <TerminalSquare className="text-primary mt-1 size-4 shrink-0" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </aside>
-    </section>
+      <section className="py-16">
+        <p className="text-muted-foreground mb-8 font-mono text-xs tracking-[0.18em] uppercase">
+          How a run unfolds
+        </p>
+        <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {chapters.map((chapter) => (
+            <li key={chapter.number} className="border-t pt-4">
+              <p className="text-muted-foreground font-mono text-xs">
+                {chapter.number}
+              </p>
+              <h3 className="mt-2 mb-2 text-lg font-semibold">
+                {chapter.title}
+              </h3>
+              <p className="text-muted-foreground text-sm leading-6">
+                {chapter.body}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
   )
 }

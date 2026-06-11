@@ -1,3 +1,4 @@
+import { Show, UserButton } from '@clerk/nextjs'
 import { BookOpenText } from 'lucide-react'
 import Link from 'next/link'
 
@@ -18,7 +19,29 @@ export function SiteNav() {
             </p>
           </div>
         </Link>
-        <Badge variant="outline">Next 15 / React 19</Badge>
+
+        <div className="flex items-center gap-4">
+          <Badge variant="outline">Next 15 / React 19</Badge>
+
+          <Show when="signed-out">
+            <Link
+              href="/sign-in"
+              className="text-foreground hover:text-muted-foreground font-mono text-xs tracking-[0.12em] uppercase"
+            >
+              Sign in
+            </Link>
+          </Show>
+
+          <Show when="signed-in">
+            <Link
+              href="/app"
+              className="text-foreground hover:text-muted-foreground font-mono text-xs tracking-[0.12em] uppercase"
+            >
+              Open app
+            </Link>
+            <UserButton />
+          </Show>
+        </div>
       </div>
     </header>
   )

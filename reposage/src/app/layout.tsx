@@ -1,8 +1,10 @@
+import { ClerkProvider } from '@clerk/nextjs'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 
 import { ShaderBackground } from '@/components/shader-background'
+import { clerkAppearance } from '@/lib/clerk-appearance'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -34,13 +36,15 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body
-        className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} flex min-h-full flex-col`}
-      >
-        <ShaderBackground />
-        {children}
-      </body>
-    </html>
+    <ClerkProvider appearance={clerkAppearance}>
+      <html lang="en" className="h-full">
+        <body
+          className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} flex min-h-full flex-col`}
+        >
+          <ShaderBackground />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
