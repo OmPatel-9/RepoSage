@@ -172,3 +172,53 @@
     color: var(--accent-foreground);
   }
 }
+
+/* ── RepoSage editorial helpers ──────────────────────────────────────── */
+
+:root {
+  /* In-progress accent for indexing UI (intentional amber, distinct from the
+     moss --accent which signals success). */
+  --rs-amber: oklch(0.78 0.14 75);
+}
+
+.dark {
+  --rs-amber: oklch(0.82 0.13 78);
+}
+
+/* Mono uppercase eyebrow label used above section/page titles. */
+.label-mark {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* Blinking block cursor for the indexing status line. */
+.rs-blink {
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  margin-left: 0.15em;
+  vertical-align: text-bottom;
+  background: var(--rs-amber);
+  animation: rs-blink 1.05s steps(1) infinite;
+}
+
+@keyframes rs-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-blink {
+    animation: none;
+    opacity: 1;
+  }
+}

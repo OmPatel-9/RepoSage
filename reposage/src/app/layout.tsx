@@ -3,7 +3,9 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 
+import { QueryProvider } from '@/components/query-provider'
 import { ShaderBackground } from '@/components/shader-background'
+import { Toaster } from '@/components/ui/sonner'
 import { clerkAppearance } from '@/lib/clerk-appearance'
 
 const geistSans = Geist({
@@ -42,7 +44,8 @@ export default function RootLayout({
           className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} flex min-h-full flex-col`}
         >
           <ShaderBackground />
-          {children}
+          <QueryProvider>{children}</QueryProvider>
+          <Toaster />
         </body>
       </html>
     </ClerkProvider>

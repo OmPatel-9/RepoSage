@@ -2,14 +2,12 @@
 
 import { useTheme } from 'next-themes'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  TriangleAlertIcon,
-  OctagonXIcon,
-  Loader2Icon,
-} from 'lucide-react'
 
+/**
+ * Editorial toast styling: dark panel, mono text, hairline border, square-ish
+ * corners (no rounded-full bubble). Icons intentionally omitted to keep the
+ * terminal-like aesthetic.
+ */
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = 'system' } = useTheme()
 
@@ -17,24 +15,21 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps['theme']}
       className="toaster group"
-      icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
-      }}
+      position="bottom-right"
       style={
         {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
-          '--normal-border': 'var(--border)',
-          '--border-radius': 'var(--radius)',
+          '--normal-bg': 'var(--primary)',
+          '--normal-text': 'var(--primary-foreground)',
+          '--normal-border': 'color-mix(in oklch, var(--primary), white 14%)',
+          '--border-radius': '0.25rem',
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: 'cn-toast',
+          toast:
+            'cn-toast !rounded-[0.25rem] !border !font-mono !text-xs !tracking-wide',
+          title: '!font-mono !text-xs !font-medium',
+          description: '!font-mono !text-[11px] !opacity-80',
         },
       }}
       {...props}

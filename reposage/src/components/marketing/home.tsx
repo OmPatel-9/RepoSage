@@ -1,6 +1,8 @@
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
+import { RepoIntakeForm } from '@/components/marketing/repo-intake-form'
+
 interface Chapter {
   number: string
   title: string
@@ -83,6 +85,8 @@ export function HomePage() {
             Sign in
           </Link>
         </div>
+
+        <RepoIntakeForm />
       </section>
 
       <section className="grid border-b sm:grid-cols-3">

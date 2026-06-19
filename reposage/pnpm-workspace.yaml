@@ -1,6 +1,12 @@
 allowBuilds:
   esbuild: true
   msgpackr-extract: true
+  protobufjs: true
+  sharp: true
+  tree-sitter-go: true
+  tree-sitter-javascript: true
+  tree-sitter-python: true
+  tree-sitter-typescript: true
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
