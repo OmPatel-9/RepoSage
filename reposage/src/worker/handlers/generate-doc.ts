@@ -146,7 +146,7 @@ export async function handleGenerateDoc(
         modelTier: 'fast',
         schema: folderSchema,
         system:
-          'You summarise a single folder of a codebase from the provided code. Be concise and concrete. Only reference files that appear in the input.',
+          'You summarise a single folder of a codebase from the provided code. Be concise and concrete. Only reference files that appear in the input. Respond with ONLY a single JSON object of the form {"folderPath": string, "purpose": string, "keyFiles": [{"path": string, "role": string}]}. Do not output any text outside the JSON.',
         messages: [
           {
             role: 'user',
@@ -189,7 +189,7 @@ export async function handleGenerateDoc(
     modelTier: 'smart',
     schema: docSchema,
     system:
-      'You write a concise onboarding guide for a new engineer joining a codebase. Use only the folder summaries provided. Be specific and practical. Do not invent files or commands you cannot infer.',
+      'You write a concise onboarding guide for a new engineer joining a codebase. Use only the folder summaries provided. Be specific and practical. Do not invent files or commands you cannot infer. Respond with ONLY a single JSON object with keys: overview (string), architecture (array of {folder, description}), entryPoints (array of {file, purpose}), howToRun (string), tips (array of strings). Output only JSON, no prose outside it.',
     messages: [
       {
         role: 'user',

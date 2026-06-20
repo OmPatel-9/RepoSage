@@ -12,16 +12,11 @@ import type {
 } from './types'
 import { QUEUE_NAME } from './types'
 
-// Cache on globalThis so Next.js HMR doesn't open a new connection per reload.
 const globalForQueue = globalThis as unknown as {
   queueConnection?: Redis
   indexingQueue?: Queue<RepoSageJob['data'], unknown, RepoSageJobName>
 }
 
-/**
- * Shared ioredis connection for the queue (producer side).
- * `maxRetriesPerRequest: null` is required by BullMQ.
- */
 export function getQueueConnection(): Redis {
   globalForQueue.queueConnection ??= new Redis(env.REDIS_URL, {
     maxRetriesPerRequest: null,
@@ -34,8 +29,6 @@ export const indexingQueue: Queue<
   unknown,
   RepoSageJobName
 > = (globalForQueue.indexingQueue ??= new Queue(QUEUE_NAME, {
-  // BullMQ bundles its own ioredis copy, so an app-level Redis instance is
-  // structurally identical but nominally distinct; cast through the shared type.
   connection: getQueueConnection() as unknown as ConnectionOptions,
   defaultJobOptions: {
     attempts: 3,
@@ -55,12 +48,14 @@ export async function enqueueIndexRepo(
   return job.id as string
 }
 
-/** Enqueue a documentation generation job. Returns the BullMQ job id. */
+/**
+ * Enqueue a documentation generation job. Returns the BullMQ job id.
+ * Uses an auto-generated job id (not keyed by repoId) so that "Regenerate"
+ * always starts a fresh run instead of colliding with a previous job.
+ */
 export async function enqueueGenerateDoc(
   data: GenerateDocJob['data'],
 ): Promise<string> {
-  const job = await indexingQueue.add('generate-doc', data, {
-    jobId: `generate-doc__${data.repoId}`,
-  })
+  const job = await indexingQueue.add('generate-doc', data)
   return job.id as string
 }

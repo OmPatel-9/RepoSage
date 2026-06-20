@@ -166,11 +166,16 @@ export async function complete<T>(
     } catch (error) {
       lastError = error
       const hasNext = i < candidates.length - 1
-      if (!hasNext || !isRetryableError(error)) {
+      // For structured (schema) calls, fall back on ANY error: Groq's llama
+      // models don't reliably produce schema-valid JSON, but the Google
+      // fallback supports native structured output and enforces the schema.
+      const canFallback =
+        hasNext && (isRetryableError(error) || options.schema != null)
+      if (!canFallback) {
         throw error
       }
       console.warn(
-        `Primary model ${model.modelId} failed (retryable), falling back.`,
+        `Model ${model.modelId} failed, falling back to next provider.`,
       )
     }
   }
