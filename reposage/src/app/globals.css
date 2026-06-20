@@ -222,3 +222,42 @@
     opacity: 1;
   }
 }
+
+/* ── Chat / workbench surface tokens ─────────────────────────────────── */
+
+:root {
+  /* A surface one step off the page background, for panels and chat shells. */
+  --bg-alt: oklch(0.97 0.006 96);
+  /* A more pronounced hairline than --border, for primary container edges. */
+  --border-strong: oklch(0.74 0.02 96);
+}
+
+.dark {
+  --bg-alt: oklch(0.19 0.012 248);
+  --border-strong: oklch(0.44 0.016 248);
+}
+
+/* Inline citation chip: amber-tinted mono pill. */
+.rs-citation {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.25rem;
+  border: 1px solid color-mix(in oklch, var(--rs-amber), transparent 55%);
+  background: color-mix(in oklch, var(--rs-amber), transparent 86%);
+  color: color-mix(in oklch, var(--rs-amber), black 30%);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+  margin: 0 0.1rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rs-citation:hover {
+  background: color-mix(in oklch, var(--rs-amber), transparent 75%);
+}
+
+.dark .rs-citation {
+  color: color-mix(in oklch, var(--rs-amber), white 10%);
+}

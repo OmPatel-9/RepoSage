@@ -1,19 +1,12 @@
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import { ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 
 import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/site-nav'
 import { db } from '@/db'
-import { repos } from '@/db/schema'
+import { chats, repos } from '@/db/schema'
 import { requireUser } from '@/lib/auth'
-
-function formatSize(bytes: number): string {
-  if (bytes <= 0) return '—'
-  const mb = bytes / (1024 * 1024)
-  if (mb >= 1) return `${mb.toFixed(1)} MB`
-  return `${Math.max(1, Math.round(bytes / 1024))} KB`
-}
 
 function formatWhen(date: Date | null): string {
   if (!date) return 'not indexed'
@@ -34,10 +27,22 @@ function statusDotClass(status: string): string {
 export default async function DashboardPage() {
   const user = await requireUser()
 
-  const rows = await db.query.repos.findMany({
-    where: eq(repos.userId, user.id),
-    orderBy: desc(repos.createdAt),
-  })
+  const rows = await db
+    .select({
+      id: repos.id,
+      owner: repos.owner,
+      name: repos.name,
+      status: repos.status,
+      fileCount: repos.fileCount,
+      indexedAt: repos.indexedAt,
+      createdAt: repos.createdAt,
+      chatCount: sql<number>`count(${chats.id})`,
+    })
+    .from(repos)
+    .leftJoin(chats, eq(chats.repoId, repos.id))
+    .where(eq(repos.userId, user.id))
+    .groupBy(repos.id)
+    .orderBy(desc(repos.createdAt))
 
   return (
     <>
@@ -91,7 +96,8 @@ export default async function DashboardPage() {
                         {repo.name}
                       </p>
                       <p className="text-muted-foreground mt-1 font-mono text-xs">
-                        {repo.fileCount} files · {formatWhen(repo.indexedAt)}
+                        {repo.fileCount} files · {Number(repo.chatCount)} chats
+                        · {formatWhen(repo.indexedAt)}
                       </p>
                     </div>
                     <span className="flex shrink-0 items-center gap-2 font-mono text-xs tracking-wide uppercase">

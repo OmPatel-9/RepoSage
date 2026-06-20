@@ -180,10 +180,23 @@ export async function complete<T>(
   throw lastError
 }
 
-export async function stream(options: BaseOptions) {
+export interface StreamCompletion {
+  text: string
+  latencyMs: number
+  provider: string
+  model: string
+}
+
+export async function stream(
+  options: BaseOptions & {
+    /** Runs after the stream finishes (e.g. persist the assistant message). */
+    onComplete?: (result: StreamCompletion) => Promise<void> | void
+  },
+) {
   await enforceRateLimit(options.userId, options.kind ?? 'chat')
 
   const { primary, fallback } = modelsForTier(options.modelTier ?? 'fast')
+  const startedAt = Date.now()
 
   // Tracks which model actually served the request, for usage logging.
   const used = { model: forceFallback() ? fallback : primary }
@@ -214,13 +227,21 @@ export async function stream(options: BaseOptions) {
     model,
     messages: options.messages,
     system: options.system,
-    onFinish: async ({ usage }) => {
+    onFinish: async ({ text, usage }) => {
       await logUsage({
         userId: options.userId,
         provider: used.model.provider,
         model: used.model.modelId,
         usage,
       })
+      if (options.onComplete) {
+        await options.onComplete({
+          text,
+          latencyMs: Date.now() - startedAt,
+          provider: used.model.provider,
+          model: used.model.modelId,
+        })
+      }
     },
   })
 }

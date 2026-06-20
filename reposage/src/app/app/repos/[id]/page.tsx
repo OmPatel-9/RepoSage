@@ -1,13 +1,14 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import type { RepoStatusResponse } from '@/app/api/repos/[id]/route'
+import { RepoOverview, type ChatSummary } from '@/components/repo/repo-overview'
 import { RepoProgress } from '@/components/repo/repo-progress'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/site-nav'
 import { db } from '@/db'
-import { indexingJobs, repos } from '@/db/schema'
+import { chats, indexingJobs, messages, repos } from '@/db/schema'
 import { requireUser } from '@/lib/auth'
 
 function fallbackProgress(status: string): number {
@@ -17,7 +18,15 @@ function fallbackProgress(status: string): number {
   return 0
 }
 
-export default async function RepoDetailPage({
+function formatWhen(date: Date | null): string {
+  if (!date) return '—'
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
+}
+
+export default async function RepoPage({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -30,22 +39,51 @@ export default async function RepoDetailPage({
   })
   if (!repo) notFound()
 
-  const latestJob = await db.query.indexingJobs.findFirst({
-    where: eq(indexingJobs.repoId, id),
-    orderBy: desc(indexingJobs.startedAt),
-  })
+  const isReady = repo.status === 'ready'
 
-  const initial: RepoStatusResponse = {
-    id: repo.id,
-    owner: repo.owner,
-    name: repo.name,
-    status: repo.status,
-    fileCount: repo.fileCount,
-    chunkCount: repo.chunkCount,
-    sizeBytes: repo.sizeBytes,
-    progress: latestJob?.progress ?? fallbackProgress(repo.status),
-    currentStep: latestJob?.currentStep ?? 'Queued',
-    error: repo.error,
+  // While indexing, show the live progress view.
+  let initial: RepoStatusResponse | null = null
+  if (!isReady) {
+    const latestJob = await db.query.indexingJobs.findFirst({
+      where: eq(indexingJobs.repoId, id),
+      orderBy: desc(indexingJobs.startedAt),
+    })
+    initial = {
+      id: repo.id,
+      owner: repo.owner,
+      name: repo.name,
+      status: repo.status,
+      fileCount: repo.fileCount,
+      chunkCount: repo.chunkCount,
+      sizeBytes: repo.sizeBytes,
+      progress: latestJob?.progress ?? fallbackProgress(repo.status),
+      currentStep: latestJob?.currentStep ?? 'Queued',
+      error: repo.error,
+    }
+  }
+
+  let chatSummaries: ChatSummary[] = []
+  if (isReady) {
+    const rows = await db
+      .select({
+        id: chats.id,
+        title: chats.title,
+        createdAt: chats.createdAt,
+        messageCount: sql<number>`count(${messages.id})`,
+        lastMessageAt: sql<string | null>`max(${messages.createdAt})`,
+      })
+      .from(chats)
+      .leftJoin(messages, eq(messages.chatId, chats.id))
+      .where(eq(chats.repoId, id))
+      .groupBy(chats.id)
+      .orderBy(desc(sql`max(${messages.createdAt})`), desc(chats.createdAt))
+
+    chatSummaries = rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      messageCount: Number(r.messageCount),
+      lastMessageAt: r.lastMessageAt,
+    }))
   }
 
   return (
@@ -68,10 +106,32 @@ export default async function RepoDetailPage({
             </h1>
           </div>
 
-          <RepoProgress initial={initial} />
+          {!isReady && initial ? (
+            <RepoProgress initial={initial} />
+          ) : (
+            <>
+              <section className="flex border-b py-8">
+                <Stat value={String(repo.fileCount)} label="Files" />
+                <div className="bg-border w-px self-stretch" />
+                <Stat value={String(repo.chunkCount)} label="Chunks" />
+                <div className="bg-border w-px self-stretch" />
+                <Stat value={formatWhen(repo.indexedAt)} label="Indexed" />
+              </section>
+              <RepoOverview repoId={id} chats={chatSummaries} />
+            </>
+          )}
         </div>
       </main>
       <SiteFooter />
     </>
+  )
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex-1 px-6 first:pl-0 last:pr-0">
+      <p className="font-serif text-4xl leading-none">{value}</p>
+      <p className="label-mark mt-2">{label}</p>
+    </div>
   )
 }
