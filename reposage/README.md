@@ -84,3 +84,26 @@ events, then copy the signing secret into `CLERK_WEBHOOK_SECRET`.
 
 For local testing, tunnel localhost and register the tunnel URL as a
 webhook endpoint the same way.
+
+## Evals
+
+RepoSage ships a retrieval + answer-quality eval harness covering 30 golden
+cases across three real-world repos (sindresorhus/is · colinhacks/zod ·
+pallets/flask).
+
+**Latest results** — run `pnpm evals:run` to generate:
+
+| Metric             | Latest |
+| ------------------ | ------ |
+| Recall@5           | —      |
+| Recall@10          | —      |
+| Citation Precision | —      |
+| Avg Answer Quality | —/5    |
+
+```bash
+# Run the full eval suite (first run indexes repos — ~20 min)
+corepack pnpm evals:run
+```
+
+Reports land in `evals/results/YYYY-MM-DD.md`. See [`evals/README.md`](evals/README.md)
+for metric definitions, how to add cases, and how to read the results.

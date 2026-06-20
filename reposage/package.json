@@ -16,6 +16,7 @@
     "db:studio": "drizzle-kit studio",
     "worker:dev": "tsx watch src/worker/index.ts",
     "worker:start": "tsx src/worker/index.ts",
+    "evals:run": "tsx src/evals/runner.ts",
     "prepare": "cd .. && husky reposage/.husky"
   },
   "dependencies": {
