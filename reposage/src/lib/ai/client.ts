@@ -27,13 +27,12 @@ import {
 export type ModelTier = 'fast' | 'smart'
 
 interface BaseOptions {
-  /** RepoSage user id (users.id) — used for rate limiting and usage logging. */
   userId: string
   messages: ModelMessage[]
   modelTier?: ModelTier
   system?: string
-  /** Rate limit bucket. Defaults to 'chat'. */
   kind?: RateLimitKind
+  skipRateLimit?: boolean
 }
 
 export interface CompletionMeta {
@@ -52,12 +51,10 @@ function modelsForTier(tier: ModelTier): {
     : { primary: getFastModel(), fallback: getFallbackFastModel() }
 }
 
-/** Dev escape hatch: FORCE_LLM_FALLBACK=1 skips the primary provider. */
 function forceFallback(): boolean {
   return process.env.FORCE_LLM_FALLBACK === '1'
 }
 
-/** Fall back only on rate limits (429) and provider-side failures (5xx). */
 function isRetryableError(error: unknown): boolean {
   if (APICallError.isInstance(error)) {
     const status = error.statusCode
@@ -81,7 +78,6 @@ async function logUsage(options: {
       outputTokens: options.usage.outputTokens ?? 0,
     })
   } catch (error) {
-    // Usage logging must never break the request path.
     console.error('Failed to log API usage:', error)
   }
 }
@@ -101,12 +97,7 @@ async function buildMeta(
     provider: model.provider,
     model: model.modelId,
   }
-  await logUsage({
-    userId,
-    provider: meta.provider,
-    model: meta.model,
-    usage,
-  })
+  await logUsage({ userId, provider: meta.provider, model: meta.model, usage })
   return meta
 }
 
@@ -119,7 +110,9 @@ export async function complete<T>(
 export async function complete<T>(
   options: BaseOptions & { schema?: z.ZodType<T> },
 ): Promise<CompletionMeta & ({ text: string } | { object: T })> {
-  await enforceRateLimit(options.userId, options.kind ?? 'chat')
+  if (!options.skipRateLimit) {
+    await enforceRateLimit(options.userId, options.kind ?? 'chat')
+  }
 
   const { primary, fallback } = modelsForTier(options.modelTier ?? 'fast')
   const candidates = forceFallback() ? [fallback] : [primary, fallback]
@@ -131,6 +124,7 @@ export async function complete<T>(
     messages: ModelMessage[]
     system?: string
     schema: z.ZodType<T>
+    providerOptions?: Record<string, Record<string, unknown>>
   }) => Promise<{ object: T; usage: LanguageModelUsage }>
 
   let lastError: unknown
@@ -143,6 +137,10 @@ export async function complete<T>(
           messages: options.messages,
           system: options.system,
           schema: options.schema,
+          // Groq's llama models reject `json_schema`; disable strict
+          // structured output so the provider uses json_object mode and the
+          // SDK validates against the Zod schema locally. Ignored by Google.
+          providerOptions: { groq: { structuredOutputs: false } },
         })
         const meta = await buildMeta(
           model,

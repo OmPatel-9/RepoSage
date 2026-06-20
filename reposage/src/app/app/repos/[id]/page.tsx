@@ -3,12 +3,19 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import type { RepoStatusResponse } from '@/app/api/repos/[id]/route'
+import { OnboardingDoc } from '@/components/repo/onboarding-doc'
 import { RepoOverview, type ChatSummary } from '@/components/repo/repo-overview'
 import { RepoProgress } from '@/components/repo/repo-progress'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteNav } from '@/components/site-nav'
 import { db } from '@/db'
-import { chats, indexingJobs, messages, repos } from '@/db/schema'
+import {
+  chats,
+  generatedDocs,
+  indexingJobs,
+  messages,
+  repos,
+} from '@/db/schema'
 import { requireUser } from '@/lib/auth'
 
 function fallbackProgress(status: string): number {
@@ -86,6 +93,15 @@ export default async function RepoPage({
     }))
   }
 
+  let docMarkdown: string | null = null
+  if (isReady) {
+    const latestDoc = await db.query.generatedDocs.findFirst({
+      where: eq(generatedDocs.repoId, id),
+      orderBy: desc(generatedDocs.generatedAt),
+    })
+    docMarkdown = latestDoc?.markdown ?? null
+  }
+
   return (
     <>
       <SiteNav />
@@ -117,6 +133,7 @@ export default async function RepoPage({
                 <div className="bg-border w-px self-stretch" />
                 <Stat value={formatWhen(repo.indexedAt)} label="Indexed" />
               </section>
+              <OnboardingDoc repoId={id} initialMarkdown={docMarkdown} />
               <RepoOverview repoId={id} chats={chatSummaries} />
             </>
           )}

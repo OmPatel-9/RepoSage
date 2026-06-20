@@ -261,3 +261,68 @@
 .dark .rs-citation {
   color: color-mix(in oklch, var(--rs-amber), white 10%);
 }
+
+/* ── Onboarding doc tokens ───────────────────────────────────────────── */
+
+:root {
+  /* Soft accent tint for inline code backgrounds in generated docs. */
+  --accent-soft: color-mix(in oklch, var(--accent), transparent 84%);
+}
+
+.dark {
+  --accent-soft: color-mix(in oklch, var(--accent), transparent 80%);
+}
+
+/* Editorial markdown styling for the generated onboarding document. */
+.rs-doc {
+  max-width: 70ch;
+}
+.rs-doc :where(p, ul, ol) {
+  font-family: var(--font-geist-sans), sans-serif;
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+.rs-doc :where(ul, ol) {
+  padding-left: 1.25rem;
+}
+.rs-doc :where(li) {
+  margin: 0.25rem 0;
+}
+.rs-doc :where(ul) {
+  list-style: none;
+}
+.rs-doc :where(ul) > li::before {
+  content: '—';
+  color: var(--muted-foreground);
+  font-family: var(--font-geist-mono), monospace;
+  margin-left: -1.25rem;
+  margin-right: 0.5rem;
+}
+.rs-doc :where(a) {
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--accent-foreground);
+  text-decoration: none;
+}
+.rs-doc :where(a):hover {
+  text-decoration: underline;
+}
+.rs-doc :where(code) {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.85em;
+  background: var(--accent-soft);
+  border-radius: 3px;
+  padding: 0.1em 0.3em;
+}
+.rs-doc :where(pre) {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0 0 1rem;
+}
+.rs-doc :where(pre code) {
+  background: transparent;
+  padding: 0;
+  font-size: 0.8rem;
+}
