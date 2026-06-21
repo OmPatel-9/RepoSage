@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { and, asc, eq } from 'drizzle-orm'
 import { notFound } from 'next/navigation'
 
