@@ -17,8 +17,12 @@ const globalForDb = globalThis as unknown as {
 const client =
   globalForDb.pgClient ??
   postgres(env.DATABASE_URL, {
-    max: 10,
+    // Serverless (Vercel) only needs 1 connection per function invocation.
+    // Long-running processes (worker, local dev) benefit from a small pool.
+    max: process.env.NODE_ENV === 'production' ? 1 : 10,
     prepare: false,
+    idle_timeout: 20,
+    connect_timeout: 10,
   })
 
 if (process.env.NODE_ENV !== 'production') {
