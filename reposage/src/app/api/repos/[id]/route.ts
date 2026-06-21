@@ -1,7 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm'
 
 import { db } from '@/db'
-import { indexingJobs, repos } from '@/db/schema'
+import { chats, chunks, indexingJobs, repos } from '@/db/schema'
 import { getCurrentUser, UnauthorizedError } from '@/lib/auth'
 
 export interface RepoStatusResponse {
@@ -81,5 +81,36 @@ export async function GET(
       { error: 'Could not load repo status.' },
       { status: 500 },
     )
+  }
+}
+
+export async function DELETE(
+  _req: Request,
+  context: { params: Promise<{ id: string }> },
+): Promise<Response> {
+  try {
+    const user = await getCurrentUser()
+    const { id } = await context.params
+
+    const repo = await db.query.repos.findFirst({
+      where: and(eq(repos.id, id), eq(repos.userId, user.id)),
+    })
+    if (!repo) {
+      return Response.json({ error: 'Repo not found.' }, { status: 404 })
+    }
+
+    // Delete in dependency order: chunks → chats → indexingJobs → repo
+    await db.delete(chunks).where(eq(chunks.repoId, id))
+    await db.delete(chats).where(eq(chats.repoId, id))
+    await db.delete(indexingJobs).where(eq(indexingJobs.repoId, id))
+    await db.delete(repos).where(eq(repos.id, id))
+
+    return new Response(null, { status: 204 })
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return Response.json({ error: 'Sign in required.' }, { status: 401 })
+    }
+    console.error('repos/[id] DELETE failed:', error)
+    return Response.json({ error: 'Could not delete repo.' }, { status: 500 })
   }
 }

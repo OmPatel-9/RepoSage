@@ -9,6 +9,7 @@ import { db } from '@/db'
 import { chats, repos } from '@/db/schema'
 import { requireUser } from '@/lib/auth'
 import { RepoIntakeForm } from '@/components/marketing/repo-intake-form'
+import { DeleteRepoButton } from '@/components/delete-repo-button'
 
 function formatWhen(date: Date | null): string {
   if (!date) return 'not indexed'
@@ -97,6 +98,7 @@ export default async function DashboardPage() {
                       />
                       {repo.status}
                     </span>
+                    <DeleteRepoButton repoId={repo.id} />
                   </Link>
                 </li>
               ))}
