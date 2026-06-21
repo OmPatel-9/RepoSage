@@ -40,11 +40,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider
-      appearance={clerkAppearance}
-      afterSignInUrl="/app"
-      afterSignUpUrl="/app"
-    >
+    <ClerkProvider appearance={clerkAppearance}>
       <html lang="en" className="h-full">
         <body
           className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} flex min-h-full flex-col`}
