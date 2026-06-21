@@ -1,0 +1,26 @@
+FROM node:22-slim
+
+# Install system deps needed by tree-sitter native bindings and git
+RUN apt-get update && apt-get install -y \
+    git \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Enable corepack for pnpm
+RUN corepack enable
+
+WORKDIR /app
+
+# Copy manifests first for better layer caching
+COPY package.json pnpm-lock.yaml ./
+
+# Install all deps (including devDeps — tsx is a devDep)
+RUN pnpm install --frozen-lockfile
+
+# Copy source
+COPY . .
+
+# Worker entry point
+CMD ["pnpm", "exec", "tsx", "src/worker/index.ts"]

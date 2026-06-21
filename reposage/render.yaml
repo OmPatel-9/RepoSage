@@ -1,0 +1,25 @@
+services:
+  - type: worker
+    name: reposage-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile.worker
+    dockerContext: ./reposage
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false # set manually in Render dashboard (use Session pooler URL)
+      - key: REDIS_URL
+        sync: false # rediss://... from Upstash
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: POSTHOG_KEY
+        sync: false
+      - key: POSTHOG_HOST
+        sync: false
+      - key: WORKER_CONCURRENCY
+        value: '2'
+      - key: SKIP_ENV_VALIDATION
+        value: '1'
