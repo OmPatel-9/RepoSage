@@ -20,6 +20,11 @@ const globalForQueue = globalThis as unknown as {
 export function getQueueConnection(): Redis {
   globalForQueue.queueConnection ??= new Redis(env.REDIS_URL, {
     maxRetriesPerRequest: null,
+    // Required for serverless (Vercel): skip the ready check so the first
+    // command doesn't time out waiting for a "ready" event that never fires.
+    enableReadyCheck: false,
+    // Don't throw on initial connect failure — let BullMQ retry.
+    lazyConnect: true,
   })
   return globalForQueue.queueConnection
 }
