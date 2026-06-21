@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { desc, eq, sql } from 'drizzle-orm'
 import Link from 'next/link'
 
