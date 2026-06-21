@@ -264,7 +264,7 @@ async function ensureRepoIndexed(
   // Minimal BullMQ Job mock — handleIndexRepo only uses .data and .updateProgress
   const mockJob = {
     data: { repoId: repo.id },
-    updateProgress: async (_n: number) => {
+    updateProgress: async (_progress: number) => {
       /* no-op */
     },
   } as unknown as Job<IndexRepoJob['data']>
