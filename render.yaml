@@ -1,0 +1,25 @@
+﻿services:
+  - type: worker
+    name: reposage-worker
+    runtime: docker
+    dockerfilePath: ./reposage/Dockerfile.worker
+    dockerContext: ./reposage
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_GENERATIVE_AI_API_KEY
+        sync: false
+      - key: POSTHOG_KEY
+        sync: false
+      - key: POSTHOG_HOST
+        sync: false
+      - key: WORKER_CONCURRENCY
+        value: '2'
+      - key: SKIP_ENV_VALIDATION
+        value: '1'
