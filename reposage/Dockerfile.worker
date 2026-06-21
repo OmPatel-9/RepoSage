@@ -16,7 +16,7 @@ COPY package.json pnpm-lock.yaml ./
 
 # --ignore-scripts skips native postinstall builds that can fail without headers;
 # tree-sitter is loaded lazily at runtime so this is safe.
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 COPY . .
 
