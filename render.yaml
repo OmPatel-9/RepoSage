@@ -1,11 +1,12 @@
 ﻿services:
-  - type: worker
+  - type: web
     name: reposage-worker
     runtime: docker
     dockerfilePath: ./reposage/Dockerfile.worker
     dockerContext: ./reposage
     branch: main
     autoDeploy: true
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -21,5 +22,7 @@
         sync: false
       - key: WORKER_CONCURRENCY
         value: '2'
+      - key: WORKER_HEALTH_PORT
+        value: '10000'
       - key: SKIP_ENV_VALIDATION
         value: '1'
