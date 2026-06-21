@@ -3,9 +3,11 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google'
 import './globals.css'
 
+import { PostHogProvider } from '@/components/posthog-provider'
 import { QueryProvider } from '@/components/query-provider'
 import { ShaderBackground } from '@/components/shader-background'
 import { Toaster } from '@/components/ui/sonner'
+import { env } from '@/env'
 import { clerkAppearance } from '@/lib/clerk-appearance'
 
 const geistSans = Geist({
@@ -38,13 +40,22 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider appearance={clerkAppearance}>
+    <ClerkProvider
+      appearance={clerkAppearance}
+      afterSignInUrl="/app"
+      afterSignUpUrl="/app"
+    >
       <html lang="en" className="h-full">
         <body
           className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable} flex min-h-full flex-col`}
         >
           <ShaderBackground />
-          <QueryProvider>{children}</QueryProvider>
+          <PostHogProvider
+            apiKey={env.NEXT_PUBLIC_POSTHOG_KEY}
+            apiHost={env.NEXT_PUBLIC_POSTHOG_HOST}
+          >
+            <QueryProvider>{children}</QueryProvider>
+          </PostHogProvider>
           <Toaster />
         </body>
       </html>

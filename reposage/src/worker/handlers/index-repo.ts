@@ -9,6 +9,7 @@ import { simpleGit } from 'simple-git'
 
 import { db } from '../../db'
 import { chunks, indexingJobs, repos } from '../../db/schema'
+import { capture } from '../../lib/analytics'
 import type { IndexRepoJob } from '../../lib/queue/types'
 import { walkRepo } from '../../lib/walker'
 import { chunkFile, type FileChunk } from '../chunker'
@@ -37,6 +38,7 @@ export async function handleIndexRepo(
 ): Promise<IndexRepoResult> {
   const { repoId } = job.data
   const clonePath = path.join(os.tmpdir(), 'reposage', repoId)
+  const startedAt = Date.now()
 
   const [jobRow] = await db
     .insert(indexingJobs)
@@ -61,6 +63,11 @@ export async function handleIndexRepo(
   try {
     const repo = await db.query.repos.findFirst({ where: eq(repos.id, repoId) })
     if (!repo) throw new Error(`Repo ${repoId} not found`)
+
+    capture(repo.userId, {
+      event: 'repo_index_started',
+      properties: { repoId, githubUrl: repo.githubUrl, userId: repo.userId },
+    })
 
     // 1. Clone -------------------------------------------------------------
     log.info({ repoId, url: repo.githubUrl }, 'index-repo: cloning')
@@ -183,15 +190,29 @@ export async function handleIndexRepo(
     }
     await job.updateProgress(100)
 
+    const latencyMs = Date.now() - startedAt
     log.info(
       {
         repoId,
         fileCount: files.length,
         chunkCount: allChunks.length,
         sizeBytes,
+        latencyMs,
       },
       'index-repo: ready',
     )
+    capture(repo.userId, {
+      event: 'repo_index_completed',
+      properties: {
+        repoId,
+        githubUrl: repo.githubUrl,
+        userId: repo.userId,
+        fileCount: files.length,
+        chunkCount: allChunks.length,
+        sizeBytes,
+        latencyMs,
+      },
+    })
     return {
       repoId,
       fileCount: files.length,
@@ -202,6 +223,23 @@ export async function handleIndexRepo(
     const message =
       error instanceof Error ? error.message : 'Unknown indexing error'
     log.error({ repoId, err: error }, 'index-repo: failed')
+
+    // Best-effort analytics — we may not have `repo` if the DB lookup failed.
+    const failedRepo = await db.query.repos.findFirst({
+      where: eq(repos.id, repoId),
+    })
+    if (failedRepo) {
+      capture(failedRepo.userId, {
+        event: 'repo_index_failed',
+        properties: {
+          repoId,
+          githubUrl: failedRepo.githubUrl,
+          userId: failedRepo.userId,
+          error: message,
+          latencyMs: Date.now() - startedAt,
+        },
+      })
+    }
 
     await db
       .update(repos)

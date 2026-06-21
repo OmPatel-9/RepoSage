@@ -19,6 +19,8 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: secret,
+    NEXT_PUBLIC_POSTHOG_KEY: secret,
+    NEXT_PUBLIC_POSTHOG_HOST: z.string().url(),
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
@@ -33,6 +35,8 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     POSTHOG_KEY: process.env.POSTHOG_KEY,
     POSTHOG_HOST: process.env.POSTHOG_HOST,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
   emptyStringAsUndefined: true,
 })

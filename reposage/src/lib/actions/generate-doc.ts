@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm'
 
 import { db } from '../../db'
 import { repos } from '../../db/schema'
+import { capture } from '../analytics'
 import { enqueueGenerateDoc } from '../queue/client'
 import { RateLimitError, enforceRateLimit } from '../rate-limit'
 import { getCurrentUser, UnauthorizedError } from '../auth'
@@ -50,5 +51,15 @@ export async function generateDocAction(
   }
 
   const jobId = await enqueueGenerateDoc({ repoId })
+  capture(userId, {
+    event: 'doc_generated',
+    properties: {
+      repoId,
+      userId,
+      model: 'queued',
+      latencyMs: 0,
+      success: true,
+    },
+  })
   return { ok: true, jobId }
 }

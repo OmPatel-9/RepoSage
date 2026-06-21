@@ -6,6 +6,7 @@ import { chats, messages, type Citation } from '@/db/schema'
 import type { ModelMessage } from 'ai'
 
 import { stream } from '@/lib/ai/client'
+import { capture } from '@/lib/analytics'
 import { getCurrentUser, UnauthorizedError } from '@/lib/auth'
 import { buildChatSystemPrompt } from '@/lib/prompts/chat'
 import { assembleContext } from '@/lib/retrieval/context'
@@ -64,6 +65,15 @@ export async function POST(
       content: parsed.data.content,
     })
 
+    capture(user.clerkId, {
+      event: 'chat_question_asked',
+      properties: {
+        repoId: chat.repoId,
+        userId: user.clerkId,
+        questionLength: parsed.data.content.length,
+      },
+    })
+
     // Retrieve + assemble grounding context for this repo.
     const chunks = await searchChunks(chat.repoId, parsed.data.content, 20)
     const { contextString } = assembleContext(chunks, 3000)
@@ -86,13 +96,25 @@ export async function POST(
       system: systemPrompt,
       messages: modelMessages,
       onComplete: async ({ text, latencyMs, model }) => {
+        const citations = extractCitations(text)
         await db.insert(messages).values({
           chatId,
           role: 'assistant',
           content: text,
-          citations: extractCitations(text),
+          citations,
           model,
           latencyMs,
+        })
+        capture(user.clerkId, {
+          event: 'chat_response_received',
+          properties: {
+            repoId: chat.repoId,
+            userId: user.clerkId,
+            model,
+            citationCount: citations.length,
+            latencyMs,
+            success: true,
+          },
         })
       },
     })

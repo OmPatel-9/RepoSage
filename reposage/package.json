@@ -17,7 +17,10 @@
     "worker:dev": "tsx watch src/worker/index.ts",
     "worker:start": "tsx src/worker/index.ts",
     "evals:run": "tsx src/evals/runner.ts",
-    "prepare": "cd .. && husky reposage/.husky"
+    "prepare": "cd .. && husky reposage/.husky",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.80",
@@ -79,7 +82,15 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@playwright/test": "^1.52.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@vitest/ui": "^3.2.4",
+    "jsdom": "^26.1.0",
+    "posthog-js": "^1.257.3",
+    "posthog-node": "^4.13.0",
+    "vitest": "^3.2.4"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs}": [

@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { eq } from 'drizzle-orm'
 import { redirect } from 'next/navigation'
 
@@ -15,8 +15,11 @@ export class UnauthorizedError extends Error {
 
 /**
  * Returns the current user's DB row.
- * Throws UnauthorizedError if not signed in or not yet synced via webhook.
- * Use in route handlers and server actions.
+ *
+ * If the user exists in Clerk but not in the DB (e.g. the webhook hasn't
+ * fired yet in local dev), we auto-create the row here so the app doesn't
+ * get stuck in a redirect loop. The webhook handler remains the canonical
+ * sync path in production; this is just a safety net.
  */
 export async function getCurrentUser(): Promise<User> {
   const { userId: clerkId } = await auth()
@@ -24,14 +27,30 @@ export async function getCurrentUser(): Promise<User> {
     throw new UnauthorizedError()
   }
 
-  const user = await db.query.users.findFirst({
+  const existing = await db.query.users.findFirst({
     where: eq(users.clerkId, clerkId),
   })
-  if (!user) {
-    throw new UnauthorizedError('User not found in database')
-  }
+  if (existing) return existing
 
-  return user
+  // DB row missing — fetch from Clerk and upsert.
+  const clerkUser = await currentUser()
+  if (!clerkUser) throw new UnauthorizedError()
+
+  const email =
+    clerkUser.emailAddresses.find(
+      (e) => e.id === clerkUser.primaryEmailAddressId,
+    )?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress
+
+  if (!email) throw new UnauthorizedError('No email on Clerk account')
+
+  const [created] = await db
+    .insert(users)
+    .values({ clerkId, email })
+    .onConflictDoUpdate({ target: users.clerkId, set: { email } })
+    .returning()
+
+  if (!created) throw new UnauthorizedError('Failed to create user row')
+  return created
 }
 
 /**

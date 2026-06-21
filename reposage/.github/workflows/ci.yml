@@ -1,0 +1,195 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  # Suppress Clerk/PostHog key validation in environments that don't need them
+  SKIP_ENV_VALIDATION: '1'
+
+jobs:
+  # ── Lint ─────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm lint
+
+  # ── Type-check ───────────────────────────────────────────────────────────
+  typecheck:
+    name: Type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tsc
+        run: pnpm typecheck
+
+  # ── Unit tests ───────────────────────────────────────────────────────────
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Vitest
+        run: pnpm test:run
+
+  # ── Build ────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Next.js app
+        run: pnpm build
+        env:
+          # Minimal stubs so Next.js build succeeds in CI without real infra
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          GROQ_API_KEY: ci-stub
+          GOOGLE_GENERATIVE_AI_API_KEY: ci-stub
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_stub
+          CLERK_SECRET_KEY: sk_test_stub
+          UPSTASH_REDIS_REST_URL: https://ci.upstash.io
+          UPSTASH_REDIS_REST_TOKEN: ci-stub
+          REDIS_URL: redis://localhost:6379
+
+  # ── E2E ──────────────────────────────────────────────────────────────────
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    # E2E needs a running app; spin up Postgres and the dev server.
+    # Skip this job if there's no DATABASE_URL secret (fork PRs etc.)
+    if: ${{ vars.RUN_E2E == 'true' }}
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: reposage
+          POSTGRES_PASSWORD: reposage
+          POSTGRES_DB: reposage
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm dlx playwright install --with-deps chromium
+
+      - name: Run DB migrations
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: postgresql://reposage:reposage@localhost:5432/reposage
+
+      - name: Build app
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://reposage:reposage@localhost:5432/reposage
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+
+      - name: Start app
+        run: pnpm start &
+        env:
+          DATABASE_URL: postgresql://reposage:reposage@localhost:5432/reposage
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+
+      - name: Wait for app to be ready
+        run: npx wait-on http://localhost:3000 --timeout 60000
+
+      - name: Run Playwright tests
+        run: pnpm exec playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
